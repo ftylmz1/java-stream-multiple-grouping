@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 
 public class App {
@@ -85,7 +86,7 @@ public class App {
         // client - location
         // content - location
 
-        rows.collect(Collectors.toMap(
+        Map<List<String>, Row> collect = rows.collect(Collectors.toMap(
                 g -> Arrays.asList(g.getClient(), g.getContent()),
                 v -> {
                     Row nr = new Row();
@@ -98,15 +99,83 @@ public class App {
                 (t, u) -> {
                     t.setConsumption(t.getConsumption() + u.getConsumption());
                     return t;
-                }))
-                .values()
-                .forEach(f -> {
-                    System.out.format("%s|%s|%d\n", f.getClient(), f.getContent(), f.getConsumption());
+                }));
 
-                });
+//                .values()
+//                .forEach(f -> {
+//                    System.out.format("%s|%s|%d\n", f.getClient(), f.getContent(), f.getConsumption());
+//
+//                });
 
 
     }
+
+    public static void readFile2(String path) throws Exception {
+
+        //this my source, It will be fetched file or database, it not important
+        streamForked(Files.lines(Paths.get(path))
+                        .map(m -> {
+                            String[] splits = m.split("\\|");
+                            Row r = new Row();
+                            r.setContent(splits[0]);
+                            r.setClient(splits[1]);
+                            r.setLocation(splits[2]);
+                            r.setConsumption(Integer.parseInt(splits[3]));
+                            return r;
+                        }),
+
+                new Common.StreamConsumer<Row, Map<List<String>, Row>>(rows -> rows.collect(Collectors.toMap(
+                        g -> Arrays.asList(g.getClient(), g.getContent()),
+                        v -> {
+                            Row nr = new Row();
+                            nr.setClient(v.getClient());
+                            nr.setContent(v.getContent());
+                            nr.setConsumption(v.getConsumption());
+                            return nr;
+                        },
+                        (t, u) -> {
+                            t.setConsumption(t.getConsumption() + u.getConsumption());
+                            return t;
+                        })),
+                        result -> result.values().forEach(f-> { System.out.format("%s|%s|%d\n", f.getClient(), f.getContent(), f.getConsumption());})),
+                new Common.StreamConsumer<Row, Map<List<String>, Row>>(rows -> rows.collect(Collectors.toMap(
+                        g -> Arrays.asList(g.getClient(), g.getLocation()),
+                        v -> {
+                            Row nr = new Row();
+                            nr.setClient(v.getClient());
+                            nr.setLocation(v.getLocation());
+                            nr.setConsumption(v.getConsumption());
+                            return nr;
+                        },
+                        (t, u) -> {
+                            t.setConsumption(t.getConsumption() + u.getConsumption());
+                            return t;
+                        })),
+                        result -> result.values().forEach(f-> { System.out.format("%s|%s|%d\n", f.getClient(), f.getLocation(), f.getConsumption());})),
+                new Common.StreamConsumer<Row, Map<List<String>, Row>>(rows -> rows.collect(Collectors.toMap(
+                        g -> Arrays.asList(g.getLocation(), g.getContent()),
+                        v -> {
+                            Row nr = new Row();
+                            nr.setLocation(v.getLocation());
+                            nr.setContent(v.getContent());
+                            nr.setConsumption(v.getConsumption());
+                            return nr;
+                        },
+                        (t, u) -> {
+                            t.setConsumption(t.getConsumption() + u.getConsumption());
+                            return t;
+                        })),
+                        result -> result.values().forEach(f-> { System.out.format("%s|%s|%d\n", f.getContent(), f.getLocation(), f.getConsumption());})));
+
+
+    }
+
+    @SafeVarargs
+    public static <T> long streamForked(Stream<T> source, Common.StreamConsumer<T, ?>... consumers)
+    {
+        return StreamSupport.stream(new Common.ForkingSpliterator<>(source, consumers), false).count();
+    }
+
 
     public static void main(String[] args) throws Exception {
         //args[0] path to create file
@@ -117,6 +186,7 @@ public class App {
         if (args[1].equals("write"))
             writeFile(args[0]);
         else if (args[1].equals("read"))
-            readFile(args[0]);
+            readFile2(args[0]);
+
     }
 }

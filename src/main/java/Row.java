@@ -5,6 +5,20 @@ public class Row {
     String location;
     int consumption;
 
+    public  Row(){
+
+    }
+
+
+    public Row(String content, String client, String location, int consumption){
+        this.content = content;
+        this.client = client;
+        this.location = location;
+        this.consumption = consumption;
+
+    }
+
+
     public String getContent() {
         return content;
     }
