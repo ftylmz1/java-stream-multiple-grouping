@@ -15,7 +15,7 @@ public class App {
 
     public static final Random rand = new Random();
 
-    public static void writeFile(String path){
+    public static void writeFile(String path) {
 
         BufferedWriter bw = null;
         FileWriter fw = null;
@@ -66,9 +66,9 @@ public class App {
 
     public static void readFile(String path) throws Exception {
 
+        //this my source, It will be fetched file or database, it not important
         Stream<Row> rows = Files.lines(Paths.get(path))
                 .map(m -> {
-
                     String[] splits = m.split("\\|");
                     Row r = new Row();
                     r.setContent(splits[0]);
@@ -79,17 +79,45 @@ public class App {
                 });
 
 
-        System.out.println(rows.collect(Collectors.groupingBy(g-> g.getContent())).size());
-        System.out.println(rows.collect(Collectors.groupingBy(g-> g.getClient())).size());
-        System.out.println(rows.collect(Collectors.groupingBy(g-> g.getLocation())).size());
 
-        System.out.println(rows.count());
+        //For example, I will do same job as
+        // client - content
+        // client - location
+        // content - location
+
+        rows.collect(Collectors.toMap(
+                g -> Arrays.asList(g.getClient(), g.getContent()),
+                v -> {
+                    Row nr = new Row();
+                    nr.setClient(v.getClient());
+                    nr.setContent(v.getContent());
+                    nr.setConsumption(v.getConsumption());
+
+                    return nr;
+                },
+                (t, u) -> {
+                    t.setConsumption(t.getConsumption() + u.getConsumption());
+                    return t;
+                }))
+                .values()
+                .forEach(f -> {
+                    System.out.format("%s|%s|%d\n", f.getClient(), f.getContent(), f.getConsumption());
+
+                });
+
+
     }
 
-    public static void main(String[] args) throws Exception{
-        if(args[1].equals("write"))
+    public static void main(String[] args) throws Exception {
+        //args[0] path to create file
+        //args[1] mode: write or read
+        //firstly, give path and mode, to create file
+        //secondly give path and mode, ro read file that you created to mapreduce process
+
+
+        if (args[1].equals("write"))
             writeFile(args[0]);
-        else if(args[1].equals("read"))
+        else if (args[1].equals("read"))
             readFile(args[0]);
     }
 }
