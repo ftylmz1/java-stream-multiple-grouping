@@ -80,7 +80,7 @@ public class App {
 
 
 
-        //For example, I will do same job as
+        //For example, I will do same job below as
         // client - content
         // client - location
         // content - location
@@ -113,7 +113,6 @@ public class App {
         //args[1] mode: write or read
         //firstly, give path and mode, to create file
         //secondly give path and mode, ro read file that you created to mapreduce process
-
 
         if (args[1].equals("write"))
             writeFile(args[0]);
